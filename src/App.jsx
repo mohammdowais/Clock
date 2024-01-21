@@ -7,53 +7,55 @@ function App() {
     const [breakTime,setBreakTime] = useState(initialBreak)
     const [minutes,setMinutes] = useState(initialSession)
     const [seconds,setSeconds] = useState(0)
-    const [start,setStart] = useState(false)
+    const [play,setPlay] = useState(false)
     const [session,setSession] = useState(true)
 
     const beepUrl = 'https://cdn.freecodecamp.org/testable-projects-fcc/audio/BeepSound.wav'
+
     
-    useEffect(()=>{
-      const timeout = setTimeout(()=>{
-        
+    const audio = document.getElementById('beep')
+    useEffect(() => { 
+      let interval 
+      if (play) {
+        interval = setInterval(() => {
+          if (seconds === 0) {
+            if (minutes === 0) {
+              clearInterval(interval);
+              audio.currentTime=0
+              audio.play()
+              console.log('hello')
+              setMinutes(breakTime)
+              setSession(prev=>!prev)
 
-          const audio = document.getElementById('beep')
-        if((!minutes && !seconds)){
-          audio.currentTime=0
-          audio.play()
-
-          setSession(prev=>{
-            const isSession = !prev
-            isSession
-            ? setMinutes(sessionTime)
-            : setMinutes(breakTime)
-            return isSession
-          })
-          
-        } 
-        if (start) {
-          setSeconds((prev) => (prev === 0 ? 59  : prev - 1));
-          setMinutes((prev) => (prev > 0 && seconds === 0 ? prev - 1 : prev));
-        }   
+            } else {
+              setMinutes((prev) => prev - 1);
+              setSeconds(59);
+            }
+          } else {
+            setSeconds((prev) => prev - 1);
+          }
+        }, 1000);
+      } 
   
-      },1000)
-  
-      return ()=> clearTimeout(timeout)
-    },[seconds,start])
+      return () => clearInterval(interval);
+    }, [play, minutes, seconds]);
     
     function updateSession(c){
-      if(!start){
+      if(!play){
         setSessionTime((p) =>{
           const t = (p + c === 0)||(p+c === 61)? p: p +c
-          setMinutes(t)
+          if(session)
+            setMinutes(t)
           return t
         })
       } 
     }
     function updateBreak(c){
-      if(!start){
+      if(!play){
         setBreakTime((p) =>{
           const t = (p + c === 0)||(p+c === 61)? p: p +c
-          setMinutes(t)
+          if(!session)
+            setMinutes(t)
           return t
         })
       }
@@ -61,14 +63,15 @@ function App() {
 
     function handleReset(){
       const audio = document.getElementById('beep')
-        audio.pause()
-          audio.currentTime=0
+      audio.pause()
+      audio.currentTime=0
+
       setSession(true)
       setBreakTime(initialBreak)
       setSessionTime(initialSession)
       setMinutes(initialSession)
       setSeconds(0)
-      setStart(false)
+      setPlay(false)
     }
   return (
     <>
@@ -107,9 +110,9 @@ function App() {
       <div>
         <div id='timer-label'>{session?'Session':'Break'}</div>
         <audio id="beep" src={beepUrl}/>
-        <div id='time-left'>{minutes>9?minutes:`0${minutes}`}:{seconds>9?seconds:`0${seconds}`}</div>
+        <div id='time-left'>{String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}</div>
       </div>
-      <button id='start_stop' onClick={_=>setStart(prev=>prev?false:true)}>{start?'pause':'start'}</button>
+      <button id='start_stop' onClick={_=>setPlay(prev=>prev?false:true)}>{play?'pause':'play'}</button>
       <button id='reset'  onClick={handleReset}>Reset</button>
     </>
   )
